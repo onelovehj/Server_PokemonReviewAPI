@@ -7,12 +7,14 @@ import com.pokemonreview.api.models.Pokemon;
 import com.pokemonreview.api.repository.PokemonRepository;
 import com.pokemonreview.api.service.PokemonService;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+//import org.modelmapper.ModelMapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,7 +24,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PokemonServiceImpl implements PokemonService {
     private final PokemonRepository pokemonRepository;
-
+    private final ModelMapper modelMapper; // Autowired 대신! final 쓰고 @RequiredArgsConstructor 를 쓴다.
     //Constructor Injection ( 생성자 주입 )
 //    public PokemonServiceImpl(PokemonRepository pokemonRepository) {
 //        this.pokemonRepository = pokemonRepository;
@@ -30,15 +32,12 @@ public class PokemonServiceImpl implements PokemonService {
 
     @Override
     public PokemonDto createPokemon(PokemonDto pokemonDto) {
-        Pokemon pokemon = mapToEntity(pokemonDto);
-
+        //Pokemon pokemon = mapToEntity(pokemonDto);
+        Pokemon pokemon = modelMapper.map(pokemonDto, Pokemon.class);
         Pokemon newPokemon = pokemonRepository.save(pokemon);
 
-//        PokemonDto pokemonResponse = new PokemonDto();
-//        pokemonResponse.setId(newPokemon.getId());
-//        pokemonResponse.setName(newPokemon.getName());
-//        pokemonResponse.setType(newPokemon.getType());
-        return mapToDto(newPokemon);
+        //return mapToDto(newPokemon);
+        return modelMapper.map(newPokemon, PokemonDto.class);
     }
 
     @Override
@@ -83,8 +82,8 @@ public class PokemonServiceImpl implements PokemonService {
         Pokemon pokemon = getExistPokemon(id);
 
         //Entity의 setter method 호출을 해도 update query가 실행 됩니다. ( Dirty Checking )
-        pokemon.setName(pokemonDto.getName());
-        pokemon.setType(pokemonDto.getType());
+        if(pokemonDto.getName() != null) pokemon.setName(pokemonDto.getName());
+        if(pokemonDto.getType() != null) pokemon.setType(pokemonDto.getType());
 
         //Pokemon updatedPokemon = pokemonRepository.save(pokemon);
         return mapToDto(pokemon);
